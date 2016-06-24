@@ -1,0 +1,16 @@
+version: '2'
+services:
+    mysql:
+        image: mysql:5.6
+        ports:
+            - "3506:3306"
+        volumes:
+            - mysql-data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: starcode
+            MYSQL_DATABASE: kicker
+            MYSQL_USER: kicker
+            MYSQL_PASSWORD: starcode
+volumes:
+    mysql-data:
+        driver: local

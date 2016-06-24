@@ -1,0 +1,9 @@
+development:
+    dialect: mysql
+    datasource: kicker:starcode@tcp(localhost:3506)/kicker?parseTime=true
+    dir: migrations/mysql
+
+production:
+    dialect: mysql
+    datasource: kicker:starcode@tcp(localhost:3506)/kicker?parseTime=true
+    dir: migrations/mysql
