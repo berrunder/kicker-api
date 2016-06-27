@@ -18,7 +18,11 @@ var repo *DbRepo
 
 func runServer(c *cli.Context) error {
 	// open and connect at the same time, panicing on error
-	db := sqlx.MustConnect("mysql", c.String("datasource"))
+	db, err := sqlx.Connect("mysql", c.String("datasource"))
+	if err != nil {
+		log.Fatalf("Error connecting to database:\n\t%v", err)
+	}
+
 	repo = &DbRepo{DB: db}
 
 	router := SetupRouter()
