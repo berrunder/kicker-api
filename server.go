@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/berrunder/kicker-api/models"
@@ -16,9 +17,36 @@ import (
 
 var repo *DbRepo
 
+const configFile = "dbconfig.yml"
+const defaultEnv = "development"
+const defaultDialect = "mysql"
+
 func runServer(c *cli.Context) error {
+	var dialect string
+	var dsn string
+
+	dialect = c.String("dialect")
+	dsn = c.String("datasource")
+
+	env := os.Getenv("KICKER_ENV")
+	if env == "" {
+		env = defaultEnv
+	}
+
+	config, err := GetConfig(configFile, env)
+	if err != nil {
+		log.Printf("Error reading config: %v", err)
+	} else if config != nil {
+		if dialect == defaultDialect {
+			dialect = config.Dialect
+		}
+		if dsn == "" {
+			dsn = config.DataSource
+		}
+	}
+
 	// open and connect at the same time, panicing on error
-	db, err := sqlx.Connect("mysql", c.String("datasource"))
+	db, err := sqlx.Connect(dialect, dsn)
 	if err != nil {
 		log.Fatalf("Error connecting to database:\n\t%v", err)
 	}

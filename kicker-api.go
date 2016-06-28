@@ -22,9 +22,15 @@ func main() {
 		&cli.StringFlag{
 			Name:    "datasource",
 			Aliases: []string{"d"},
-			Value:   "kicker:starcode@tcp(localhost:3506)/kicker?parseTime=true",
-			Usage:   "Datasource connection string (MySQL)",
+			Value:   "",
+			Usage:   "Datasource connection string",
 			EnvVars: []string{"KICKER_DSN"},
+		},
+		&cli.StringFlag{
+			Name:    "dialect",
+			Value:   "mysql",
+			Usage:   "Datasource dialect",
+			EnvVars: []string{"KICKER_DB_DIALECT"},
 		},
 	}
 
