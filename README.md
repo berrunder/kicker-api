@@ -23,4 +23,4 @@ Simple REST API for database of kicker (foosball) games
 kicker-api [--port value] [--datasource value] [--dialect value]
 ```
 Where `--port` is webserver port (4000 by default), `--datasource` is database connection string (by default DSN from dbconfig.yaml is used), `--dialect` is database dialect ("mysql" by default, can be any dialect supported by sqlx).
-`KICKER_ENV` environment variable is used for choosing database config from dbconfig.yaml ("development" by default"). 
+`KICKER_ENV` environment variable is used for choosing database config from dbconfig.yaml ("development" by default). 
