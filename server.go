@@ -12,14 +12,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 )
-
-var repo *DbRepo
 
 const configFile = "dbconfig.yml"
 const defaultEnv = "development"
 const defaultDialect = "mysql"
+const pageSize = 100
+
+// DbHandler stores data repository dependency
+type DbHandler struct {
+	repo models.Repo
+}
 
 func runServer(c *cli.Context) error {
 	var dialect string
@@ -46,14 +49,12 @@ func runServer(c *cli.Context) error {
 	}
 
 	// open and connect at the same time, panicing on error
-	db, err := sqlx.Connect(dialect, dsn)
+	repo, err := models.NewDbRepo(dialect, dsn)
 	if err != nil {
 		log.Fatalf("Error connecting to database:\n\t%v", err)
 	}
 
-	repo = &DbRepo{DB: db}
-
-	router := SetupRouter()
+	router := SetupRouter(&DbHandler{repo}, true)
 
 	port := ":" + c.String("port")
 	log.Printf("Listening on %v...\n", port)
@@ -63,17 +64,20 @@ func runServer(c *cli.Context) error {
 }
 
 // SetupRouter for API
-func SetupRouter() *gin.Engine {
-	// Creates a gin router with default middleware:
-	// logger and recovery (crash-free) middleware
-	router := gin.Default()
+func SetupRouter(handler *DbHandler, useLogger bool) *gin.Engine {
+	router := gin.New()
 
+	// Global middleware
+	if useLogger {
+		router.Use(gin.Logger())
+	}
+	router.Use(gin.Recovery())
 	router.Use(CORSMiddleware())
 
 	v1 := router.Group("/v1")
 	{
-		v1.GET("/score", getScores)
-		v1.GET("/score/:id", getScore)
+		v1.GET("/score", handler.getScores)
+		v1.GET("/score/:id", handler.getScore)
 		v1.OPTIONS("/score", optionsHandler)
 		v1.OPTIONS("/score/:id", optionsHandler)
 	}
@@ -81,12 +85,11 @@ func SetupRouter() *gin.Engine {
 	return router
 }
 
-const pageSize = 100
-
-func getScores(c *gin.Context) {
+func (h *DbHandler) getScores(c *gin.Context) {
 
 	var scores []models.Game
 	var err error
+	repo := h.repo
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "0"))
 	if err != nil {
@@ -105,6 +108,10 @@ func getScores(c *gin.Context) {
 		return
 	}
 
+	if scores == nil {
+		scores = make([]models.Game, 0)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"total": total,
 		"data":  scores,
@@ -112,14 +119,14 @@ func getScores(c *gin.Context) {
 	})
 }
 
-func getScore(c *gin.Context) {
+func (h *DbHandler) getScore(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, getAPIError("Bad request", err))
 		return
 	}
 
-	s, err := repo.FindGame(id)
+	s, err := h.repo.FindGame(id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, getInternalError(err))
