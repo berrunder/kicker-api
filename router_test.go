@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"flag"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +11,7 @@ import (
 	"time"
 
 	"github.com/berrunder/kicker-api/models"
+	"github.com/gin-gonic/gin"
 )
 
 func setupMockDb() *models.MockDbRepo {
@@ -20,12 +23,18 @@ func setupMockDb() *models.MockDbRepo {
 	return repo
 }
 
+var useLogger = flag.Bool("log", false, "Enable logger middleware in Gin for test")
+
+func getRouter(repo models.Repo) *gin.Engine {
+	return SetupRouter(&DbHandler{repo}, *useLogger)
+}
+
 func TestEmptyGamesIndex(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/score", nil)
 
 	repo := models.NewMockDb()
-	router := SetupRouter(&DbHandler{repo}, true)
+	router := getRouter(repo)
 
 	router.ServeHTTP(rec, req)
 
@@ -46,12 +55,13 @@ func TestGamesIndex(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/v1/score", nil)
 
 	repo := setupMockDb()
-	router := SetupRouter(&DbHandler{repo}, true)
+	router := getRouter(repo)
 
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("Non-expected status code %v, %v expected", rec.Code, http.StatusOK)
+	expectedCode := http.StatusOK
+	if rec.Code != expectedCode {
+		t.Fatalf("Non-expected status code %v, %v expected", rec.Code, expectedCode)
 	}
 
 	var games []models.Game
@@ -72,5 +82,55 @@ func TestGamesIndex(t *testing.T) {
 
 	if trimmed != string(expected) {
 		t.Errorf("\n...expected = '%v'\n...obtained = '%v'", string(expected), trimmed)
+	}
+}
+
+func TestGameNotFound(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/score/1", nil)
+
+	repo := models.NewMockDb()
+	router := getRouter(repo)
+
+	router.ServeHTTP(rec, req)
+
+	expectedCode := http.StatusNotFound
+	if rec.Code != expectedCode {
+		t.Fatalf("Non-expected status code %v, %v expected", rec.Code, expectedCode)
+	}
+
+	expected := []byte("{\"status\":\"Not found\"}\n")
+	obtained := rec.Body.Bytes()
+
+	if !bytes.Equal(expected, obtained) {
+		t.Errorf("\n...expected = '%q'\n...obtained = '%q'", expected, obtained)
+	}
+}
+
+func TestGetGame(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/score/1", nil)
+
+	repo := setupMockDb()
+	router := getRouter(repo)
+
+	router.ServeHTTP(rec, req)
+
+	expectedCode := http.StatusOK
+
+	if rec.Code != expectedCode {
+		t.Fatalf("Non-expected status code %v, %v expected", rec.Code, expectedCode)
+	}
+
+	expected, err := json.Marshal(repo.Games[1])
+	if err != nil {
+		panic(err)
+	}
+	expected = append(expected, []byte("\n")[0])
+
+	obtained := rec.Body.Bytes()
+
+	if !bytes.Equal(expected, obtained) {
+		t.Errorf("\n...expected = '%q'\n...obtained = '%q'", expected, obtained)
 	}
 }
