@@ -37,7 +37,6 @@ func TestEmptyGamesIndex(t *testing.T) {
 	trimmed := strings.TrimSpace(rec.Body.String())
 
 	if trimmed != expected {
-		t.Fail()
 		t.Errorf("\n...expected = '%v'\n...obtained = '%v'", expected, trimmed)
 	}
 }
@@ -56,9 +55,9 @@ func TestGamesIndex(t *testing.T) {
 	}
 
 	var games []models.Game
-	for _, v := range repo.Games {
-		games = append(games, v)
-	}
+	games = append(games, repo.Games[1])
+	games = append(games, repo.Games[2])
+
 	expectedMap := make(map[string]interface{})
 	expectedMap["data"] = games
 	expectedMap["page"] = 0
@@ -72,7 +71,6 @@ func TestGamesIndex(t *testing.T) {
 	trimmed := strings.TrimSpace(rec.Body.String())
 
 	if trimmed != string(expected) {
-		t.Fail()
 		t.Errorf("\n...expected = '%v'\n...obtained = '%v'", string(expected), trimmed)
 	}
 }

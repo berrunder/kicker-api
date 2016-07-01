@@ -2,4 +2,4 @@
 
 export GIN_MODE=release
 
-go test
+go test "$@" 

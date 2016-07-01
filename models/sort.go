@@ -30,13 +30,13 @@ func (a Int64Sorter) Less(i, j int) bool {
 	return a.by(a.items[i], a.items[j])
 }
 
-// GameSorter - joins int64 slice and sorting function
+// GameSorter - joins Game slice and sorting function
 type GameSorter struct {
 	items []Game
 	by    func(a, b Game) bool
 }
 
-// GameBy is the type of a "less" function that defines the ordering of its int64 arguments
+// GameBy is the type of a "less" function that defines the ordering of its arguments
 type GameBy func(a, b Game) bool
 
 // Sort is a method on the function type, By, that sorts the argument slice according to the function.
