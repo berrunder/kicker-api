@@ -134,3 +134,28 @@ func TestGetGame(t *testing.T) {
 		t.Errorf("\n...expected = '%q'\n...obtained = '%q'", expected, obtained)
 	}
 }
+
+func TestOptions(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "/v1/score/1", nil)
+
+	repo := models.NewMockDb()
+	router := getRouter(repo)
+
+	router.ServeHTTP(rec, req)
+
+	expectedMethods := "DELETE,POST,PUT"
+	if !strings.Contains(strings.Join(rec.HeaderMap["Access-Control-Allow-Methods"], ""), expectedMethods) {
+		t.Errorf("\n...expected to contain = '%q'\n...obtained = '%q'", expectedMethods, rec.HeaderMap["Access-Control-Allow-Methods"])
+	}
+
+	expectedOrigin := "*"
+	if !strings.Contains(strings.Join(rec.HeaderMap["Access-Control-Allow-Origin"], ""), expectedOrigin) {
+		t.Errorf("\n...expected to contain = '%q'\n...obtained = '%q'", expectedOrigin, rec.HeaderMap["Access-Control-Allow-Origin"])
+	}
+
+	expectedAllowHeaders := "Content-Type"
+	if !strings.Contains(strings.Join(rec.HeaderMap["Access-Control-Allow-Headers"], ""), expectedAllowHeaders) {
+		t.Errorf("\n...expected to contain '%q'\n...obtained = '%q'", expectedAllowHeaders, rec.HeaderMap["Access-Control-Allow-Headers"])
+	}
+}
