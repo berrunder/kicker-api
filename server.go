@@ -8,7 +8,7 @@ import (
 
 	"github.com/berrunder/kicker-api/models"
 
-	"gopkg.in/urfave/cli.v2"
+	"github.com/urfave/cli/v2"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
